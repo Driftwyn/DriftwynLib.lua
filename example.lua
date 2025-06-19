@@ -151,6 +151,9 @@ function DriftwynLib:CreateWindow(config)
             title.Parent = sectionFrame
 
             function section:AddSlider(cfg)
+                local value = cfg.Default
+                local function updateText() return cfg.Name .. ": " .. tostring(value) end
+
                 local container = Instance.new("Frame")
                 container.Size = UDim2.new(1, -20, 0, 30)
                 container.Position = UDim2.new(0, 10, 0, 105)
@@ -162,7 +165,7 @@ function DriftwynLib:CreateWindow(config)
                 local slider = Instance.new("TextLabel")
                 slider.Size = UDim2.new(0.8, 0, 1, 0)
                 slider.BackgroundTransparency = 1
-                slider.Text = cfg.Name .. ": " .. cfg.Default
+                slider.Text = updateText()
                 slider.Font = Enum.Font.Gotham
                 slider.TextColor3 = Color3.fromRGB(255, 255, 255)
                 slider.TextSize = 14
@@ -189,15 +192,14 @@ function DriftwynLib:CreateWindow(config)
                 plus.BackgroundColor3 = Color3.fromRGB(40, 80, 40)
                 plus.Parent = container
 
-                local value = cfg.Default
                 plus.MouseButton1Click:Connect(function()
                     value = math.clamp(value + 1, cfg.Min, cfg.Max)
-                    slider.Text = cfg.Name .. ": " .. value
+                    slider.Text = updateText()
                     if cfg.Callback then cfg.Callback(value) end
                 end)
                 minus.MouseButton1Click:Connect(function()
                     value = math.clamp(value - 1, cfg.Min, cfg.Max)
-                    slider.Text = cfg.Name .. ": " .. value
+                    slider.Text = updateText()
                     if cfg.Callback then cfg.Callback(value) end
                 end)
             end
@@ -221,10 +223,11 @@ function DriftwynLib:CreateWindow(config)
                 dropdown.Parent = container
 
                 local optionList = Instance.new("Frame")
-                optionList.Size = UDim2.new(1, 0, 0, 60)
+                optionList.Size = UDim2.new(1, 0, 0, #cfg.Options * 24)
                 optionList.Position = UDim2.new(0, 0, 0, 30)
                 optionList.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
                 optionList.Visible = false
+                optionList.ClipsDescendants = true
                 optionList.Parent = container
 
                 local layout = Instance.new("UIListLayout")
