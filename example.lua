@@ -133,7 +133,7 @@ function DriftwynLib:CreateWindow(config)
             local section = {}
 
             local sectionFrame = Instance.new("Frame")
-            sectionFrame.Size = UDim2.new(1, 0, 0, 150)
+            sectionFrame.Size = UDim2.new(1, 0, 0, 200)
             sectionFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
             sectionFrame.BorderSizePixel = 0
             sectionFrame.Parent = tabContent
@@ -150,102 +150,107 @@ function DriftwynLib:CreateWindow(config)
             title.Size = UDim2.new(1, -20, 0, 25)
             title.Parent = sectionFrame
 
-            function section:AddButton(cfg)
-                local btn = Instance.new("TextButton")
-                btn.Text = cfg.Name or "Button"
-                btn.Font = Enum.Font.Gotham
-                btn.TextSize = 14
-                btn.Size = UDim2.new(1, -20, 0, 30)
-                btn.Position = UDim2.new(0, 10, 0, 35)
-                btn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                btn.Parent = sectionFrame
-                btn.BorderSizePixel = 0
-                Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
-                if cfg.Callback then btn.MouseButton1Click:Connect(cfg.Callback) end
-            end
-
-            function section:AddToggle(cfg)
-                local val = cfg.Default or false
-                local toggle = Instance.new("TextButton")
-                toggle.Size = UDim2.new(1, -20, 0, 30)
-                toggle.Position = UDim2.new(0, 10, 0, 70)
-                toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-                toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-                toggle.Font = Enum.Font.Gotham
-                toggle.TextSize = 14
-                toggle.Text = cfg.Name .. ": " .. tostring(val)
-                toggle.Parent = sectionFrame
-                toggle.BorderSizePixel = 0
-                Instance.new("UICorner", toggle)
-                toggle.MouseButton1Click:Connect(function()
-                    val = not val
-                    toggle.Text = cfg.Name .. ": " .. tostring(val)
-                    if cfg.Callback then cfg.Callback(val) end
-                end)
-            end
-
             function section:AddSlider(cfg)
-                local slider = Instance.new("TextButton")
-                slider.Size = UDim2.new(1, -20, 0, 30)
-                slider.Position = UDim2.new(0, 10, 0, 105)
-                slider.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
-                slider.TextColor3 = Color3.fromRGB(255, 255, 255)
-                slider.Font = Enum.Font.Gotham
-                slider.TextSize = 14
+                local container = Instance.new("Frame")
+                container.Size = UDim2.new(1, -20, 0, 30)
+                container.Position = UDim2.new(0, 10, 0, 105)
+                container.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
+                container.BorderSizePixel = 0
+                container.Parent = sectionFrame
+                Instance.new("UICorner", container)
+
+                local slider = Instance.new("TextLabel")
+                slider.Size = UDim2.new(0.8, 0, 1, 0)
+                slider.BackgroundTransparency = 1
                 slider.Text = cfg.Name .. ": " .. cfg.Default
-                slider.Parent = sectionFrame
-                slider.BorderSizePixel = 0
-                Instance.new("UICorner", slider)
-                slider.MouseButton1Click:Connect(function()
-                    local val = tonumber(slider.Text:match("%d+")) or cfg.Default
-                    val = val + 1
-                    if val > cfg.Max then val = cfg.Min end
-                    slider.Text = cfg.Name .. ": " .. val
-                    if cfg.Callback then cfg.Callback(val) end
+                slider.Font = Enum.Font.Gotham
+                slider.TextColor3 = Color3.fromRGB(255, 255, 255)
+                slider.TextSize = 14
+                slider.TextXAlignment = Enum.TextXAlignment.Left
+                slider.Parent = container
+
+                local minus = Instance.new("TextButton")
+                minus.Size = UDim2.new(0.1, 0, 1, 0)
+                minus.Position = UDim2.new(0.8, 0, 0, 0)
+                minus.Text = "-"
+                minus.Font = Enum.Font.GothamBold
+                minus.TextSize = 16
+                minus.TextColor3 = Color3.fromRGB(255, 255, 255)
+                minus.BackgroundColor3 = Color3.fromRGB(80, 40, 40)
+                minus.Parent = container
+
+                local plus = Instance.new("TextButton")
+                plus.Size = UDim2.new(0.1, 0, 1, 0)
+                plus.Position = UDim2.new(0.9, 0, 0, 0)
+                plus.Text = "+"
+                plus.Font = Enum.Font.GothamBold
+                plus.TextSize = 16
+                plus.TextColor3 = Color3.fromRGB(255, 255, 255)
+                plus.BackgroundColor3 = Color3.fromRGB(40, 80, 40)
+                plus.Parent = container
+
+                local value = cfg.Default
+                plus.MouseButton1Click:Connect(function()
+                    value = math.clamp(value + 1, cfg.Min, cfg.Max)
+                    slider.Text = cfg.Name .. ": " .. value
+                    if cfg.Callback then cfg.Callback(value) end
+                end)
+                minus.MouseButton1Click:Connect(function()
+                    value = math.clamp(value - 1, cfg.Min, cfg.Max)
+                    slider.Text = cfg.Name .. ": " .. value
+                    if cfg.Callback then cfg.Callback(value) end
                 end)
             end
 
             function section:AddDropdown(cfg)
-                local dd = Instance.new("TextButton")
-                dd.Size = UDim2.new(1, -20, 0, 30)
-                dd.Position = UDim2.new(0, 10, 0, 140)
-                dd.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-                dd.TextColor3 = Color3.fromRGB(255, 255, 255)
-                dd.Font = Enum.Font.Gotham
-                dd.TextSize = 14
-                dd.Text = cfg.Name or "Dropdown"
-                dd.Parent = sectionFrame
-                dd.BorderSizePixel = 0
-                Instance.new("UICorner", dd)
-                dd.MouseButton1Click:Connect(function()
-                    print("Dropdown pressed. Select option manually for now.")
-                    if cfg.Callback then cfg.Callback(cfg.Options[1]) end
-                end)
-            end
+                local container = Instance.new("Frame")
+                container.Size = UDim2.new(1, -20, 0, 90)
+                container.Position = UDim2.new(0, 10, 0, 140)
+                container.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+                container.BorderSizePixel = 0
+                container.Parent = sectionFrame
+                Instance.new("UICorner", container)
 
-            function section:AddKeybind(cfg)
-                local key = cfg.Default or Enum.KeyCode.F
-                UserInputService.InputBegan:Connect(function(input, gpe)
-                    if not gpe and input.KeyCode == key then
-                        if cfg.Callback then cfg.Callback() end
-                    end
-                end)
-            end
+                local dropdown = Instance.new("TextButton")
+                dropdown.Size = UDim2.new(1, 0, 0, 30)
+                dropdown.Text = cfg.Name
+                dropdown.Font = Enum.Font.Gotham
+                dropdown.TextSize = 14
+                dropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+                dropdown.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+                dropdown.Parent = container
 
-            function section:AddTextbox(cfg)
-                local box = Instance.new("TextBox")
-                box.Text = cfg.Default or ""
-                box.Size = UDim2.new(1, -20, 0, 30)
-                box.Position = UDim2.new(0, 10, 0, 175)
-                box.BackgroundColor3 = Color3.fromRGB(45, 45, 70)
-                box.TextColor3 = Color3.fromRGB(255, 255, 255)
-                box.PlaceholderText = cfg.Name
-                box.Font = Enum.Font.Gotham
-                box.TextSize = 14
-                box.Parent = sectionFrame
-                box.FocusLost:Connect(function()
-                    if cfg.Callback then cfg.Callback(box.Text) end
+                local optionList = Instance.new("Frame")
+                optionList.Size = UDim2.new(1, 0, 0, 60)
+                optionList.Position = UDim2.new(0, 0, 0, 30)
+                optionList.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+                optionList.Visible = false
+                optionList.Parent = container
+
+                local layout = Instance.new("UIListLayout")
+                layout.SortOrder = Enum.SortOrder.LayoutOrder
+                layout.Padding = UDim.new(0, 4)
+                layout.Parent = optionList
+
+                for _, opt in ipairs(cfg.Options or {}) do
+                    local btn = Instance.new("TextButton")
+                    btn.Size = UDim2.new(1, 0, 0, 20)
+                    btn.Text = opt
+                    btn.Font = Enum.Font.Gotham
+                    btn.TextSize = 14
+                    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
+                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    btn.Parent = optionList
+
+                    btn.MouseButton1Click:Connect(function()
+                        dropdown.Text = cfg.Name .. ": " .. opt
+                        optionList.Visible = false
+                        if cfg.Callback then cfg.Callback(opt) end
+                    end)
+                end
+
+                dropdown.MouseButton1Click:Connect(function()
+                    optionList.Visible = not optionList.Visible
                 end)
             end
 
