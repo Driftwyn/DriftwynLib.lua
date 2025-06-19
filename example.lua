@@ -1,4 +1,4 @@
--- DriftwynLib - Full UI Library with Buttons, Toggles, Sliders, Dropdowns, Keybinds, and Textboxes
+-- DriftwynLib - Full UI Library with Fixes: Slider, Dropdown, Keybinds, Textbox, Toggle
 local DriftwynLib = {}
 
 local TweenService = game:GetService("TweenService")
@@ -27,9 +27,7 @@ function DriftwynLib:CreateWindow(config)
     MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = DriftwynUI
-
-    local UICorner = Instance.new("UICorner", MainFrame)
-    UICorner.CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 
     -- Make draggable
     local dragging, dragStart, startPos = false, nil, nil
@@ -40,9 +38,7 @@ function DriftwynLib:CreateWindow(config)
             startPos = MainFrame.Position
 
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
             end)
         end
     end)
@@ -68,7 +64,7 @@ function DriftwynLib:CreateWindow(config)
     TabButtonsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     TabButtonsFrame.Position = UDim2.new(0, 0, 0, 40)
     TabButtonsFrame.Size = UDim2.new(0, 120, 1, -40)
-    TabButtonsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    TabButtonsFrame.CanvasSize = UDim2.new(0, 0, 5, 0)
     TabButtonsFrame.ScrollBarThickness = 4
     TabButtonsFrame.Parent = MainFrame
 
@@ -83,9 +79,7 @@ function DriftwynLib:CreateWindow(config)
     ContentFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
     ContentFrame.BorderSizePixel = 0
     ContentFrame.Parent = MainFrame
-
-    local ContentCorner = Instance.new("UICorner", ContentFrame)
-    ContentCorner.CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", ContentFrame).CornerRadius = UDim.new(0, 6)
 
     function self:SetActiveTab(tabName)
         for _, tab in pairs(self.Tabs) do
@@ -109,11 +103,13 @@ function DriftwynLib:CreateWindow(config)
         tabBtn.BorderSizePixel = 0
         tabBtn.Parent = TabButtonsFrame
 
-        local tabContent = Instance.new("Frame")
+        local tabContent = Instance.new("ScrollingFrame")
         tabContent.Name = tabName .. "_Content"
         tabContent.Size = UDim2.new(1, 0, 1, 0)
         tabContent.BackgroundTransparency = 1
         tabContent.Visible = false
+        tabContent.ScrollBarThickness = 4
+        tabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
         tabContent.Parent = ContentFrame
 
         local sectionLayout = Instance.new("UIListLayout", tabContent)
@@ -133,12 +129,16 @@ function DriftwynLib:CreateWindow(config)
             local section = {}
 
             local sectionFrame = Instance.new("Frame")
-            sectionFrame.Size = UDim2.new(1, 0, 0, 200)
+            sectionFrame.Size = UDim2.new(1, -10, 0, 0)
             sectionFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
             sectionFrame.BorderSizePixel = 0
+            sectionFrame.AutomaticSize = Enum.AutomaticSize.Y
             sectionFrame.Parent = tabContent
 
             Instance.new("UICorner", sectionFrame).CornerRadius = UDim.new(0, 6)
+            local layout = Instance.new("UIListLayout", sectionFrame)
+            layout.SortOrder = Enum.SortOrder.LayoutOrder
+            layout.Padding = UDim.new(0, 6)
 
             local title = Instance.new("TextLabel")
             title.Text = sectionTitle
@@ -146,114 +146,115 @@ function DriftwynLib:CreateWindow(config)
             title.TextSize = 16
             title.TextColor3 = Color3.fromRGB(255, 255, 255)
             title.BackgroundTransparency = 1
-            title.Position = UDim2.new(0, 10, 0, 5)
             title.Size = UDim2.new(1, -20, 0, 25)
             title.Parent = sectionFrame
 
+            local function createElement(height)
+                local elem = Instance.new("Frame")
+                elem.Size = UDim2.new(1, -20, 0, height)
+                elem.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
+                elem.BorderSizePixel = 0
+                elem.Parent = sectionFrame
+                Instance.new("UICorner", elem)
+                return elem
+            end
+
+            function section:AddButton(cfg)
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.new(1, -20, 0, 30)
+                btn.Text = cfg.Name or "Button"
+                btn.Font = Enum.Font.Gotham
+                btn.TextSize = 14
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                btn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
+                btn.BorderSizePixel = 0
+                btn.Parent = sectionFrame
+                Instance.new("UICorner", btn)
+                btn.MouseButton1Click:Connect(function()
+                    if cfg.Callback then cfg.Callback() end
+                end)
+            end
+
             function section:AddSlider(cfg)
-                local value = cfg.Default
-                local function updateText() return cfg.Name .. ": " .. tostring(value) end
+                local val = cfg.Default or cfg.Min
+                local container = createElement(30)
+                local text = Instance.new("TextLabel", container)
+                text.Size = UDim2.new(0.6, 0, 1, 0)
+                text.TextXAlignment = Enum.TextXAlignment.Left
+                text.Text = cfg.Name .. ": " .. val
+                text.Font = Enum.Font.Gotham
+                text.TextSize = 14
+                text.TextColor3 = Color3.fromRGB(255, 255, 255)
+                text.BackgroundTransparency = 1
 
-                local container = Instance.new("Frame")
-                container.Size = UDim2.new(1, -20, 0, 30)
-                container.Position = UDim2.new(0, 10, 0, 105)
-                container.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-                container.BorderSizePixel = 0
-                container.Parent = sectionFrame
-                Instance.new("UICorner", container)
-
-                local slider = Instance.new("TextLabel")
-                slider.Size = UDim2.new(0.8, 0, 1, 0)
-                slider.BackgroundTransparency = 1
-                slider.Text = updateText()
-                slider.Font = Enum.Font.Gotham
-                slider.TextColor3 = Color3.fromRGB(255, 255, 255)
-                slider.TextSize = 14
-                slider.TextXAlignment = Enum.TextXAlignment.Left
-                slider.Parent = container
-
-                local minus = Instance.new("TextButton")
-                minus.Size = UDim2.new(0.1, 0, 1, 0)
-                minus.Position = UDim2.new(0.8, 0, 0, 0)
+                local minus = Instance.new("TextButton", container)
+                minus.Size = UDim2.new(0.2, 0, 1, 0)
+                minus.Position = UDim2.new(0.6, 0, 0, 0)
                 minus.Text = "-"
+                minus.BackgroundColor3 = Color3.fromRGB(80, 40, 40)
                 minus.Font = Enum.Font.GothamBold
                 minus.TextSize = 16
-                minus.TextColor3 = Color3.fromRGB(255, 255, 255)
-                minus.BackgroundColor3 = Color3.fromRGB(80, 40, 40)
-                minus.Parent = container
 
-                local plus = Instance.new("TextButton")
-                plus.Size = UDim2.new(0.1, 0, 1, 0)
-                plus.Position = UDim2.new(0.9, 0, 0, 0)
+                local plus = Instance.new("TextButton", container)
+                plus.Size = UDim2.new(0.2, 0, 1, 0)
+                plus.Position = UDim2.new(0.8, 0, 0, 0)
                 plus.Text = "+"
+                plus.BackgroundColor3 = Color3.fromRGB(40, 80, 40)
                 plus.Font = Enum.Font.GothamBold
                 plus.TextSize = 16
-                plus.TextColor3 = Color3.fromRGB(255, 255, 255)
-                plus.BackgroundColor3 = Color3.fromRGB(40, 80, 40)
-                plus.Parent = container
+
+                local function update(val)
+                    text.Text = cfg.Name .. ": " .. val
+                    if cfg.Callback then cfg.Callback(val) end
+                end
 
                 plus.MouseButton1Click:Connect(function()
-                    value = math.clamp(value + 1, cfg.Min, cfg.Max)
-                    slider.Text = updateText()
-                    if cfg.Callback then cfg.Callback(value) end
+                    val = math.clamp(val + 1, cfg.Min, cfg.Max)
+                    update(val)
                 end)
                 minus.MouseButton1Click:Connect(function()
-                    value = math.clamp(value - 1, cfg.Min, cfg.Max)
-                    slider.Text = updateText()
-                    if cfg.Callback then cfg.Callback(value) end
+                    val = math.clamp(val - 1, cfg.Min, cfg.Max)
+                    update(val)
                 end)
             end
 
             function section:AddDropdown(cfg)
-                local container = Instance.new("Frame")
-                container.Size = UDim2.new(1, -20, 0, 90)
-                container.Position = UDim2.new(0, 10, 0, 140)
-                container.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-                container.BorderSizePixel = 0
-                container.Parent = sectionFrame
-                Instance.new("UICorner", container)
-
-                local dropdown = Instance.new("TextButton")
+                local val = cfg.Name
+                local container = createElement(30 + (#cfg.Options * 24))
+                container.ClipsDescendants = true
+                local dropdown = Instance.new("TextButton", container)
                 dropdown.Size = UDim2.new(1, 0, 0, 30)
-                dropdown.Text = cfg.Name
+                dropdown.Text = val
                 dropdown.Font = Enum.Font.Gotham
                 dropdown.TextSize = 14
                 dropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
                 dropdown.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
-                dropdown.Parent = container
 
-                local optionList = Instance.new("Frame")
-                optionList.Size = UDim2.new(1, 0, 0, #cfg.Options * 24)
-                optionList.Position = UDim2.new(0, 0, 0, 30)
-                optionList.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-                optionList.Visible = false
-                optionList.ClipsDescendants = true
-                optionList.Parent = container
+                local list = Instance.new("Frame", container)
+                list.Size = UDim2.new(1, 0, 0, #cfg.Options * 24)
+                list.Position = UDim2.new(0, 0, 0, 30)
+                list.BackgroundTransparency = 1
+                list.Visible = false
 
-                local layout = Instance.new("UIListLayout")
-                layout.SortOrder = Enum.SortOrder.LayoutOrder
-                layout.Padding = UDim.new(0, 4)
-                layout.Parent = optionList
+                Instance.new("UIListLayout", list)
 
-                for _, opt in ipairs(cfg.Options or {}) do
-                    local btn = Instance.new("TextButton")
-                    btn.Size = UDim2.new(1, 0, 0, 20)
-                    btn.Text = opt
-                    btn.Font = Enum.Font.Gotham
-                    btn.TextSize = 14
-                    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
-                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    btn.Parent = optionList
-
-                    btn.MouseButton1Click:Connect(function()
+                for _, opt in ipairs(cfg.Options) do
+                    local optBtn = Instance.new("TextButton", list)
+                    optBtn.Size = UDim2.new(1, 0, 0, 24)
+                    optBtn.Text = opt
+                    optBtn.Font = Enum.Font.Gotham
+                    optBtn.TextSize = 14
+                    optBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
+                    optBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    optBtn.MouseButton1Click:Connect(function()
                         dropdown.Text = cfg.Name .. ": " .. opt
-                        optionList.Visible = false
+                        list.Visible = false
                         if cfg.Callback then cfg.Callback(opt) end
                     end)
                 end
 
                 dropdown.MouseButton1Click:Connect(function()
-                    optionList.Visible = not optionList.Visible
+                    list.Visible = not list.Visible
                 end)
             end
 
@@ -261,9 +262,7 @@ function DriftwynLib:CreateWindow(config)
         end
 
         table.insert(self.Tabs, tab)
-        if #self.Tabs == 1 then
-            self:SetActiveTab(tabName)
-        end
+        if #self.Tabs == 1 then self:SetActiveTab(tabName) end
 
         return tab
     end
