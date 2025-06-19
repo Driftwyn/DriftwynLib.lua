@@ -108,7 +108,7 @@ function DriftwynLib:CreateWindow(config)
         tabContent.BackgroundTransparency = 1
         tabContent.Visible = false
         tabContent.ScrollBarThickness = 4
-        tabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+        tabContent.CanvasSize = UDim2.new(0, 0, 5, 0)
         tabContent.Parent = ContentFrame
 
         local sectionLayout = Instance.new("UIListLayout", tabContent)
@@ -148,19 +148,19 @@ function DriftwynLib:CreateWindow(config)
             title.Size = UDim2.new(1, -20, 0, 25)
             title.Parent = sectionFrame
 
-            function section:AddTextbox(cfg)
-                local box = Instance.new("TextBox")
-                box.Size = UDim2.new(1, -20, 0, 30)
-                box.PlaceholderText = cfg.Name or "Textbox"
-                box.Font = Enum.Font.Gotham
-                box.TextSize = 14
-                box.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
-                box.TextColor3 = Color3.fromRGB(255, 255, 255)
-                box.Parent = sectionFrame
-                Instance.new("UICorner", box)
-                box.FocusLost:Connect(function()
-                    if cfg.Callback then cfg.Callback(box.Text) end
-                end)
+            function section:AddButton(cfg)
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.new(1, -20, 0, 30)
+                btn.Text = cfg.Name or "Button"
+                btn.Font = Enum.Font.Gotham
+                btn.TextSize = 14
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                btn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
+                btn.Parent = sectionFrame
+                Instance.new("UICorner", btn)
+                if cfg.Callback then
+                    btn.MouseButton1Click:Connect(cfg.Callback)
+                end
             end
 
             function section:AddToggle(cfg)
@@ -181,6 +181,21 @@ function DriftwynLib:CreateWindow(config)
                 end)
             end
 
+            function section:AddTextbox(cfg)
+                local box = Instance.new("TextBox")
+                box.Size = UDim2.new(1, -20, 0, 30)
+                box.PlaceholderText = cfg.Name or "Textbox"
+                box.Font = Enum.Font.Gotham
+                box.TextSize = 14
+                box.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
+                box.TextColor3 = Color3.fromRGB(255, 255, 255)
+                box.Parent = sectionFrame
+                Instance.new("UICorner", box)
+                box.FocusLost:Connect(function()
+                    if cfg.Callback then cfg.Callback(box.Text) end
+                end)
+            end
+
             function section:AddKeybind(cfg)
                 local bindKey = cfg.Default or Enum.KeyCode.F
                 local label = Instance.new("TextButton")
@@ -192,13 +207,11 @@ function DriftwynLib:CreateWindow(config)
                 label.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
                 label.Parent = sectionFrame
                 Instance.new("UICorner", label)
-
                 local rebinding = false
                 label.MouseButton1Click:Connect(function()
                     label.Text = "Press any key..."
                     rebinding = true
                 end)
-
                 UserInputService.InputBegan:Connect(function(input, gp)
                     if not gp and rebinding and input.UserInputType == Enum.UserInputType.Keyboard then
                         bindKey = input.KeyCode
@@ -208,6 +221,100 @@ function DriftwynLib:CreateWindow(config)
                         if cfg.Callback then cfg.Callback() end
                     end
                 end)
+            end
+
+            function section:AddSlider(cfg)
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.new(1, -20, 0, 20)
+                label.Text = cfg.Name .. ": " .. tostring(cfg.Default)
+                label.Font = Enum.Font.Gotham
+                label.TextSize = 14
+                label.TextColor3 = Color3.fromRGB(255, 255, 255)
+                label.BackgroundTransparency = 1
+                label.Parent = sectionFrame
+
+                local sliderBg = Instance.new("Frame")
+                sliderBg.Size = UDim2.new(1, -20, 0, 8)
+                sliderBg.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
+                sliderBg.Parent = sectionFrame
+                Instance.new("UICorner", sliderBg)
+
+                local fill = Instance.new("Frame")
+                fill.Size = UDim2.new(0, 0, 1, 0)
+                fill.BackgroundColor3 = Color3.fromRGB(150, 100, 255)
+                fill.BorderSizePixel = 0
+                fill.Parent = sliderBg
+                Instance.new("UICorner", fill)
+
+                local dragging = false
+                sliderBg.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = true
+                    end
+                end)
+                UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
+                    end
+                end)
+                UserInputService.InputChanged:Connect(function(input)
+                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        local rel = input.Position.X - sliderBg.AbsolutePosition.X
+                        local pct = math.clamp(rel / sliderBg.AbsoluteSize.X, 0, 1)
+                        fill.Size = UDim2.new(pct, 0, 1, 0)
+                        local value = math.floor(cfg.Min + (cfg.Max - cfg.Min) * pct)
+                        label.Text = cfg.Name .. ": " .. tostring(value)
+                        if cfg.Callback then cfg.Callback(value) end
+                    end
+                end)
+                -- Default value
+                local defaultPct = (cfg.Default - cfg.Min) / (cfg.Max - cfg.Min)
+                fill.Size = UDim2.new(defaultPct, 0, 1, 0)
+            end
+
+            function section:AddDropdown(cfg)
+                local state = false
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.new(1, -20, 0, 30)
+                btn.Text = cfg.Name or "Dropdown"
+                btn.Font = Enum.Font.Gotham
+                btn.TextSize = 14
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                btn.BackgroundColor3 = Color3.fromRGB(60, 60, 85)
+                btn.Parent = sectionFrame
+                Instance.new("UICorner", btn)
+
+                local list = Instance.new("Frame")
+                list.Size = UDim2.new(1, -20, 0, 0)
+                list.BackgroundColor3 = Color3.fromRGB(70, 70, 100)
+                list.Visible = false
+                list.Parent = sectionFrame
+                Instance.new("UICorner", list)
+                local layout = Instance.new("UIListLayout", list)
+                layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+                btn.MouseButton1Click:Connect(function()
+                    state = not state
+                    list.Visible = state
+                    list.Size = state and UDim2.new(1, -20, 0, #cfg.Options * 30) or UDim2.new(1, -20, 0, 0)
+                end)
+
+                for _, opt in ipairs(cfg.Options) do
+                    local optBtn = Instance.new("TextButton")
+                    optBtn.Text = opt
+                    optBtn.Size = UDim2.new(1, 0, 0, 30)
+                    optBtn.Font = Enum.Font.Gotham
+                    optBtn.TextSize = 14
+                    optBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    optBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 110)
+                    optBtn.Parent = list
+                    optBtn.MouseButton1Click:Connect(function()
+                        btn.Text = cfg.Name .. ": " .. opt
+                        list.Visible = false
+                        state = false
+                        if cfg.Callback then cfg.Callback(opt) end
+                    end)
+                end
             end
 
             return section
